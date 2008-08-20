@@ -4,11 +4,11 @@ module PintoBeans
   class RackInterfacer
     def call(env)
       request = transform_request(env)
-      response = PintoBeans::Router.new.route(request)
+      response = delegate_to_router(request)
       transform_response(response)
     end
 
-    private
+    private unless $DEBUG
 
     def transform_request(env)
       rack_request = Rack::Request.new(env)
@@ -22,6 +22,10 @@ module PintoBeans
       request.query_strings = rack_request.GET
       request.form_data     = rack_request.POST
       request
+    end
+
+    def delegate_to_router(request)
+      PintoBeans::Router.new.route(request)
     end
 
     def transform_response(response)

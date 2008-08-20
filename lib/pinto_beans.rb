@@ -6,6 +6,11 @@ module PintoBeans
     return '0.0.1'
   end
 
+  autoload :MethodNotAllowedController, 'pinto_beans/controllers/method_not_allowed'
+  autoload :NotFoundController, 'pinto_beans/controllers/not_found'
+  autoload :ServiceUnavailableController, 'pinto_beans/controllers/service_unavailable'
+  autoload :UnauthorizedController, 'pinto_beans/controllers/unauthorized'
+
   autoload :Config, 'pinto_beans/config'
   autoload :BaseController, 'pinto_beans/base_controller'
   autoload :FrontController, 'pinto_beans/front_controller'
@@ -21,6 +26,7 @@ module PintoBeans
 end
 
 autoload :DBI, 'dbi'
+autoload :Time, 'time'
 autoload :URL, 'url'
 autoload :YAML, 'yaml'
 

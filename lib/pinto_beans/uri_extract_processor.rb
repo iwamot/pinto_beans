@@ -23,7 +23,12 @@ module PintoBeans
     private
 
     def validator(name)
-      Class.get("#{PintoBeans::Config.new.app_name}::#{name.camelize}Validator").new
+      config = PintoBeans::Config.new
+      validator = Class.get("%s::%sValidator" % [
+        config.app_name, name.camelize
+      ]).new
+      validator.config = config if validator.respond_to?(:config=)
+      validator
     end
   end
 end
