@@ -18,6 +18,7 @@ module PintoBeans
   autoload :HttpResponse, 'pinto_beans/http_response'
   autoload :Locale, 'pinto_beans/locale'
   autoload :RackInterfacer, 'pinto_beans/rack_interfacer'
+  autoload :RackServer, 'pinto_beans/rack_server'
   autoload :Route, 'pinto_beans/route'
   autoload :Router, 'pinto_beans/router'
   autoload :Translator, 'pinto_beans/translator'
