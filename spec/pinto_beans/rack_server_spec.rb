@@ -16,7 +16,7 @@ describe 'PintoBeans::RackServer.call' do
     PintoBeans::Router.should_receive(:route) do |request|
       request.uri.should == 'http://pinto.jp/dummy'
       mock_response
-    end
+    end.once
 
     env = Rack::MockRequest.env_for('http://pinto.jp/dummy')
     response = PintoBeans::RackServer.new.call(env)
