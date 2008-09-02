@@ -18,8 +18,11 @@ module PintoBeans
 END
 
       etag = '"' + Digest::MD5.hexdigest(response_body) + '"'
+      last_modified = Time.utc(2008, 9, 1, 12, 34, 56)
 
-      if env['HTTP_IF_NONE_MATCH'] != etag
+      if !env['HTTP_IF_NONE_MATCH'].to_s.split(/,\s*/).include?(etag) &&
+            env['HTTP_IF_NONE_MATCH'] != '*' &&
+            env['HTTP_IF_MODIFIED_SINCE'] != last_modified.httpdate
         return [
           300,
           {
@@ -28,8 +31,8 @@ END
             'Allow' => 'GET, HEAD, OPTIONS',
             'Content-Language' => 'en',
             'Content-Type' => 'application/xhtml+xml; charset=UTF-8',
-            'Last-Modified' => Time.now.httpdate,
-            'Expires' => (Time.now + (60 * 60 * 6)).httpdate
+            'Last-Modified' => last_modified.httpdate,
+            'Expires' => (last_modified + (60 * 60 * 6)).httpdate
           },
           response_body
         ]
