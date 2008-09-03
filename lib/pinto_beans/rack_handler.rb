@@ -18,11 +18,24 @@ module PintoBeans
 END
 
       etag = '"' + Digest::MD5.hexdigest(response_body) + '"'
-      last_modified = Time.utc(2008, 9, 1, 12, 34, 56)
+      last_modified = Time.utc(2008, 8, 1, 12, 34, 56)
 
-      if !env['HTTP_IF_NONE_MATCH'].to_s.split(/,\s*/).include?(etag) &&
-            env['HTTP_IF_NONE_MATCH'] != '*' &&
-            env['HTTP_IF_MODIFIED_SINCE'] != last_modified.httpdate
+      if_modified_since = begin
+                            Time.httpdate(env['HTTP_IF_MODIFIED_SINCE'])
+                          rescue
+                            nil
+                          end
+
+      if (env['HTTP_IF_NONE_MATCH'].nil? && if_modified_since.nil?) ||
+            (
+              !env['HTTP_IF_NONE_MATCH'].nil? &&
+              !env['HTTP_IF_NONE_MATCH'].to_s.split(/,\s*/).include?(etag) &&
+              env['HTTP_IF_NONE_MATCH'] != '*'
+            ) ||
+            (
+              !if_modified_since.nil? &&
+              if_modified_since != last_modified
+            )
         return [
           300,
           {
