@@ -26,7 +26,9 @@ END
                             nil
                           end
 
-      if (env['HTTP_IF_NONE_MATCH'].nil? && if_modified_since.nil?) ||
+      if (env['HTTP_IF_NONE_MATCH'].nil? &&
+          if_modified_since.nil? &&
+          env['HTTP_IF_MATCH'].nil?) ||
             (
               !env['HTTP_IF_NONE_MATCH'].nil? &&
               !env['HTTP_IF_NONE_MATCH'].to_s.split(/,\s*/).include?(etag) &&
@@ -35,6 +37,11 @@ END
             (
               !if_modified_since.nil? &&
               if_modified_since != last_modified
+            ) ||
+            (
+              !env['HTTP_IF_MATCH'].nil? &&
+              (env['HTTP_IF_MATCH'].to_s.split(/,\s*/).include?(etag) ||
+               env['HTTP_IF_MATCH'] == '*')
             )
         return [
           300,
@@ -46,6 +53,20 @@ END
             'Content-Type' => 'application/xhtml+xml; charset=UTF-8',
             'Last-Modified' => last_modified.httpdate,
             'Expires' => (last_modified + (60 * 60 * 6)).httpdate
+          },
+          response_body
+        ]
+      end
+
+      if !env['HTTP_IF_MATCH'].nil? &&
+         !env['HTTP_IF_MATCH'].to_s.split(/,\s*/).include?(etag) &&
+         env['HTTP_IF_MATCH'] != '*'
+        return [
+          412,
+          {
+            'Allow' => 'GET, HEAD, OPTIONS',
+            'Content-Language' => 'en',
+            'Content-Type' => 'application/xhtml+xml; charset=UTF-8'
           },
           response_body
         ]
