@@ -25,42 +25,17 @@ END
                           rescue
                             nil
                           end
+      if_unmodified_since = begin
+                              Time.httpdate(env['HTTP_IF_UNMODIFIED_SINCE'])
+                            rescue
+                              nil
+                            end
 
-      if (env['HTTP_IF_NONE_MATCH'].nil? &&
-          if_modified_since.nil? &&
-          env['HTTP_IF_MATCH'].nil?) ||
-            (
-              !env['HTTP_IF_NONE_MATCH'].nil? &&
-              !env['HTTP_IF_NONE_MATCH'].to_s.split(/,\s*/).include?(etag) &&
-              env['HTTP_IF_NONE_MATCH'] != '*'
-            ) ||
-            (
-              !if_modified_since.nil? &&
-              if_modified_since != last_modified
-            ) ||
-            (
-              !env['HTTP_IF_MATCH'].nil? &&
-              (env['HTTP_IF_MATCH'].to_s.split(/,\s*/).include?(etag) ||
-               env['HTTP_IF_MATCH'] == '*')
-            )
-        return [
-          300,
-          {
-            'Cache-Control' => 'max-age=21600',
-            'ETag' => etag,
-            'Allow' => 'GET, HEAD, OPTIONS',
-            'Content-Language' => 'en',
-            'Content-Type' => 'application/xhtml+xml; charset=UTF-8',
-            'Last-Modified' => last_modified.httpdate,
-            'Expires' => (last_modified + (60 * 60 * 6)).httpdate
-          },
-          response_body
-        ]
-      end
-
-      if !env['HTTP_IF_MATCH'].nil? &&
-         !env['HTTP_IF_MATCH'].to_s.split(/,\s*/).include?(etag) &&
-         env['HTTP_IF_MATCH'] != '*'
+      if (!env['HTTP_IF_MATCH'].nil? &&
+          !env['HTTP_IF_MATCH'].to_s.split(/,\s*/).include?(etag) &&
+          env['HTTP_IF_MATCH'] != '*') ||
+         (!if_unmodified_since.nil? &&
+          if_unmodified_since != last_modified)
         return [
           412,
           {
@@ -72,7 +47,28 @@ END
         ]
       end
 
-      [304, {'ETag' => etag}, response_body]
+      if (!env['HTTP_IF_NONE_MATCH'].nil? || !if_modified_since.nil?) &&
+         (env['HTTP_IF_NONE_MATCH'].nil? ||
+          env['HTTP_IF_NONE_MATCH'].to_s.split(/,\s*/).include?(etag) ||
+          env['HTTP_IF_NONE_MATCH'] == '*') &&
+         (if_modified_since.nil? ||
+          if_modified_since == last_modified)
+        return [304, {'ETag' => etag}, response_body]
+      end
+
+      [
+        300,
+        {
+          'Cache-Control' => 'max-age=21600',
+          'ETag' => etag,
+          'Allow' => 'GET, HEAD, OPTIONS',
+          'Content-Language' => 'en',
+          'Content-Type' => 'application/xhtml+xml; charset=UTF-8',
+          'Last-Modified' => last_modified.httpdate,
+          'Expires' => (last_modified + (60 * 60 * 6)).httpdate
+        },
+        response_body
+      ]
     end
   end
 end
