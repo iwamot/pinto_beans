@@ -4,6 +4,14 @@ require 'time'
 module PintoBeans
   class RackHandler
     def call(env)
+      [
+        503,
+        {'Content-Type' => 'application/xhtml+xml; charset=UTF-8',
+         'Content-Language' => 'en'},
+        '503 Service Unavailable'
+      ]
+
+=begin
       response_body = <<END
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
@@ -69,6 +77,7 @@ END
         },
         response_body
       ]
+=end
     end
   end
 end
