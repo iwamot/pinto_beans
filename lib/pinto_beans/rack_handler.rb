@@ -1,4 +1,4 @@
-require 'digest/md5'
+#require 'digest/md5'
 require 'time'
 
 module PintoBeans
@@ -6,8 +6,12 @@ module PintoBeans
     def call(env)
       [
         503,
-        {'Content-Type' => 'application/xhtml+xml; charset=UTF-8',
-         'Content-Language' => 'en'},
+        {
+          'Content-Type' => 'application/xhtml+xml; charset=UTF-8',
+          'Content-Language' => 'en',
+          'ETag' => '"xxxx"',
+          'Last-Modified' => Time.now.utc.httpdate
+        },
         '503 Service Unavailable'
       ]
 

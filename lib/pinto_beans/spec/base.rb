@@ -23,7 +23,7 @@ module PintoBeans
 
         @allowed_methods.each do |method|
           spec = self
-          sub_group = group.describe "when it's called by #{method} under service_unavailable" do
+          sub_group = group.describe "when it's requested by #{method} under service_unavailable" do
             before(:all) do
               spec.service_unavailable_begin
               @response = spec.request(uri, method)
@@ -45,7 +45,7 @@ module PintoBeans
           next if @allowed_methods.include?(method)
 
           spec = self
-          sub_group = group.describe "when it's called by #{method}" do
+          sub_group = group.describe "when it's requested by #{method}" do
             before(:all) do
               http = Net::HTTP.new(uri.host, uri.port)
               @response = spec.request(uri, method)
@@ -74,7 +74,6 @@ module PintoBeans
             test_valid_if_none_match_etag(uri, group, method, etag)
             test_valid_if_none_match_etags(uri, group, method, etag)
             test_asterisk_if_none_match(uri, group, method, etag)
-# 以下、未実装
             test_valid_rfc1123_if_modified_since(uri, group, method, last_modified)
             test_valid_rfc1036_if_modified_since(uri, group, method, last_modified)
             test_valid_asctime_if_modified_since(uri, group, method, last_modified)
@@ -87,7 +86,7 @@ module PintoBeans
         return if etag.nil?
 
         spec = self
-        sub_group = group.describe "when it's called by #{method} with invalid If-Match entity tag" do
+        sub_group = group.describe "when it's requested by #{method} with invalid If-Match entity tag" do
           before(:all) do
             header = {'If-Match' => etag + 'a'}
             @response = spec.request(uri, method, header)
@@ -101,7 +100,7 @@ module PintoBeans
         return if etag.nil?
 
         spec = self
-        sub_group = group.describe "when it's called by #{method} with invalid If-Match entity tags" do
+        sub_group = group.describe "when it's requested by #{method} with invalid If-Match entity tags" do
           before(:all) do
             header = {'If-Match' => etag + 'a, a"a"'}
             @response = spec.request(uri, method, header)
@@ -115,7 +114,7 @@ module PintoBeans
         return if last_modified.nil?
 
         spec = self
-        sub_group = group.describe "when it's called by #{method} with advanced If-Unmodified-Since" do
+        sub_group = group.describe "when it's requested by #{method} with advanced If-Unmodified-Since" do
           before(:all) do
             advanced_time = Time.httpdate(last_modified).utc.succ.httpdate
             header = {'If-Unmodified-Since' => advanced_time}
@@ -130,7 +129,7 @@ module PintoBeans
         return if last_modified.nil?
 
         spec = self
-        sub_group = group.describe "when it's called by #{method} with delayed If-Unmodified-Since" do
+        sub_group = group.describe "when it's requested by #{method} with delayed If-Unmodified-Since" do
           before(:all) do
             delayed_time = (Time.httpdate(last_modified).utc - 1).httpdate
             header = {'If-Unmodified-Since' => delayed_time}
@@ -145,7 +144,7 @@ module PintoBeans
         return if etag.nil? || last_modified.nil?
 
         spec = self
-        sub_group = group.describe "when it's called by #{method} with invalid If-Match and valid If-Unmodified-Since" do
+        sub_group = group.describe "when it's requested by #{method} with invalid If-Match and valid If-Unmodified-Since" do
           before(:all) do
             header = {'If-Match' => etag + 'a',
                       'If-Unmodified-Since' => last_modified}
@@ -160,7 +159,7 @@ module PintoBeans
         return if etag.nil? || last_modified.nil?
 
         spec = self
-        sub_group = group.describe "when it's called by #{method} with invalid If-Match and valid If-Unmodified-Since" do
+        sub_group = group.describe "when it's requested by #{method} with invalid If-Match and valid If-Unmodified-Since" do
           before(:all) do
             advanced_time = Time.httpdate(last_modified).utc.succ.httpdate
             header = {'If-Match' => etag,
@@ -176,7 +175,7 @@ module PintoBeans
         return if etag.nil?
 
         spec = self
-        sub_group = group.describe "when it's called by #{method} with valid If-None-Match entity tag" do
+        sub_group = group.describe "when it's requested by #{method} with valid If-None-Match entity tag" do
           before(:all) do
             header = {'If-None-Match' => etag}
             @response = spec.request(uri, method, header)
@@ -191,7 +190,7 @@ module PintoBeans
         return if etag.nil?
 
         spec = self
-        sub_group = group.describe "when it's called by #{method} with valid If-None-Match entity tags" do
+        sub_group = group.describe "when it's requested by #{method} with valid If-None-Match entity tags" do
           before(:all) do
             header = {'If-None-Match' => etag + ', a"a"'}
             @response = spec.request(uri, method, header)
@@ -206,9 +205,76 @@ module PintoBeans
         return if etag.nil?
 
         spec = self
-        sub_group = group.describe "when it's called by #{method} with \"*\" If-None-Match" do
+        sub_group = group.describe "when it's requested by #{method} with \"*\" If-None-Match" do
           before(:all) do
             header = {'If-None-Match' => '*'}
+            @response = spec.request(uri, method, header)
+          end
+        end
+
+        status_code = ['GET', 'HEAD'].include?(method) ? 304 : 412
+        self.test_response(sub_group, status_code, method)
+      end
+
+      def test_valid_rfc1123_if_modified_since(uri, group, method, last_modified)
+        return if last_modified.nil?
+
+        spec = self
+        sub_group = group.describe "when it's requested by #{method} with valid RFC 1123 If-Modified-Since" do
+          before(:all) do
+            header = {'If-Modified-Since' => last_modified}
+            @response = spec.request(uri, method, header)
+          end
+        end
+
+        status_code = ['GET', 'HEAD'].include?(method) ? 304 : 412
+        self.test_response(sub_group, status_code, method)
+      end
+
+      def test_valid_rfc1036_if_modified_since(uri, group, method, last_modified)
+        return if last_modified.nil?
+
+        spec = self
+        sub_group = group.describe "when it's requested by #{method} with valid RFC 1036 If-Modified-Since" do
+          before(:all) do
+            if_modified_since = Time.httpdate(last_modified).utc.
+                  strftime('%A, %d-%b-%y %H:%M:%S GMT')
+            header = {'If-Modified-Since' => if_modified_since}
+            @response = spec.request(uri, method, header)
+          end
+        end
+
+        status_code = ['GET', 'HEAD'].include?(method) ? 304 : 412
+        self.test_response(sub_group, status_code, method)
+      end
+
+      def test_valid_asctime_if_modified_since(uri, group, method, last_modified)
+        return if last_modified.nil?
+
+        spec = self
+        sub_group = group.describe "when it's requested by #{method} with valid asctime() If-Modified-Since" do
+          before(:all) do
+            if_modified_since = Time.httpdate(last_modified).utc.
+                  strftime('%a %b ' +
+                           Time.httpdate(last_modified).day.to_s.rjust(2) +
+                           ' %H:%M:%S %Y')
+            header = {'If-Modified-Since' => if_modified_since}
+            @response = spec.request(uri, method, header)
+          end
+        end
+
+        status_code = ['GET', 'HEAD'].include?(method) ? 304 : 412
+        self.test_response(sub_group, status_code, method)
+      end
+
+      def test_valid_if_none_match_and_valid_if_modified_since(uri, group, method, etag, last_modified)
+        return if etag.nil? || last_modified.nil?
+
+        spec = self
+        sub_group = group.describe "when it's requested by #{method} with valid If-None-Match and valid If-Modified-Since" do
+          before(:all) do
+            header = {'If-Match' => etag,
+                      'If-Unmodified-Since' => last_modified}
             @response = spec.request(uri, method, header)
           end
         end
@@ -263,7 +329,7 @@ module PintoBeans
       def test_valid_if_match(uri, group, method)
         multiple = @multiple
 
-        sub_group = group.describe "when it's called by #{method} with valid If-Match header" do
+        sub_group = group.describe "when it's requested by #{method} with valid If-Match header" do
           before(:all) do
             http = Net::HTTP.new(uri.host, uri.port)
             @get_response = http.get(uri.path)
