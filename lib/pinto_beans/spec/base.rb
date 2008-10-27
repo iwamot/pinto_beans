@@ -1,4 +1,6 @@
+require 'net/http'
 require 'time'
+require 'uri'
 
 module PintoBeans
   module Spec
