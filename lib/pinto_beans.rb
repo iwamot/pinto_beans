@@ -1,1 +1,2 @@
-require 'pinto_beans/rack_handler'
+require 'pinto_beans/server'
+

@@ -2,12 +2,11 @@ module PintoBeans
   class RackHandler
     def call(env)
       [
-        300,
-        {
-          'Content-Type' => 'text/html; charset=UTF-8'
-        },
-        'テスト'
-      ]
+        200,
+        {'Content-Type' => 'text/plain; charset=UTF-8'},
+        'Hello World!'
+      ] 
     end
   end
 end
+
