@@ -1,0 +1,9 @@
+$LOAD_PATH << (File.expand_path(File.dirname(__FILE__) + '/../lib'))
+require 'pinto_beans/factory'
+
+PintoBeans::Factory.new(
+  'Pinto',
+  '/home/iwamoto/projects/pinto',
+  80,
+  'development'
+).web_server.run

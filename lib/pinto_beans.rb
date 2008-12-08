@@ -1,2 +1,1 @@
-require 'pinto_beans/server'
-
+require 'pinto_beans/web_server'
