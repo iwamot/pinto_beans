@@ -1,7 +1,7 @@
 require 'rubygems'
+require 'optparse'
 require 'rack'
 
-require 'pinto_beans/application'
 require 'pinto_beans/dispatcher'
 require 'pinto_beans/front_controller'
 require 'pinto_beans/helper/string'
@@ -14,24 +14,42 @@ require 'pinto_beans/web_handler/rack'
 require 'pinto_beans/web_interfacer/request/rack'
 require 'pinto_beans/web_interfacer/response/rack'
 require 'pinto_beans/web_server/mongrel'
+require 'pinto_beans/wrapper/daemons'
+require 'pinto_beans/wrapper/file'
+require 'pinto_beans/wrapper/file_test'
 require 'pinto_beans/wrapper/rack_request'
 
 module PintoBeans
   class Factory
-    def initialize(app_name, app_dir, port, mode)
-      @app_name = app_name
-      @app_dir = app_dir
-      @port = port
-      @mode = mode
+    def opt_parser
+      OptionParser.new
     end
 
-    def web_server
+    def daemons
+      PintoBeans::Wrapper::Daemons.new
+    end
+
+    def file
+      PintoBeans::Wrapper::File.new
+    end
+
+    def filetest
+      PintoBeans::Wrapper::FileTest.new
+    end
+
+    def web_server(port, app_dir)
+      @app_dir = app_dir
+
       PintoBeans::WebServer::Mongrel.new(
-        Rack::ShowExceptions.new(
-          Rack::Lint.new(
-            PintoBeans::WebHandler::Rack.new(self)
+        Rack::CommonLogger.new(
+          Rack::ShowExceptions.new(
+            Rack::Lint.new(
+              Rack::Reloader.new(
+                PintoBeans::WebHandler::Rack.new(self), 5
+              )
+            )
           )
-        ), @port
+        ), port
       )
     end
 
@@ -49,7 +67,6 @@ module PintoBeans
       PintoBeans::FrontController.new(
         PintoBeans::Router.new(PintoBeans::Route.new),
         PintoBeans::Dispatcher.new(
-          PintoBeans::Application.new(@app_name, @app_dir, @mode),
           PintoBeans::Response.new
         )
       )

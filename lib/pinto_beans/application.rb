@@ -1,21 +1,11 @@
 module PintoBeans
   class Application
-    def initialize(name, dir, mode)
-      @name = name
+    def initialize(dir)
       @dir = dir
-      @mode = mode
-    end
-
-    def name
-      @name
     end
 
     def dir
       @dir
-    end
-
-    def maintenance?
-      @mode == 'maintenance'
     end
   end
 end

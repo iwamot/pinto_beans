@@ -10,11 +10,7 @@ module PintoBeans
       end
 
       def run
-        begin
-          ::Rack::Handler::Mongrel.run(@web_handler, :Port => @port)
-        rescue Interrupt
-          puts 'stopeed'
-        end
+        ::Rack::Handler::Mongrel.run(@web_handler, :Port => @port)
       end
     end
   end

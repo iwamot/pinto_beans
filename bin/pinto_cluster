@@ -1,0 +1,67 @@
+require 'pinto_beans'
+
+port   = nil
+number = 1
+dir    = nil
+
+factory = PintoBeans::Factory.new
+
+opt_parser = factory.opt_parser
+opt_parser.banner =  "Usage:\n"
+opt_parser.banner << "     pinto_cluster start [options]   Start servers\n"
+opt_parser.banner << "     pinto_cluster stop              Stop servers\n"
+opt_parser.separator('Options:')
+opt_parser.on('-p', '--port PORT', Integer, 'Server port') do |p|
+  port = p
+end
+opt_parser.on('-n', '--number NUMBER', Integer, 'Number of servers (default: 1)') do |n|
+  number = n
+end
+opt_parser.on('-d', '--dir DIR', String, 'Application directory') do |d|
+  unless factory.filetest.directory?(d)
+    puts "directory doesn't exist"
+    exit
+  end
+  dir = d
+end
+
+command = ARGV.shift
+unless command == 'start' || command == 'stop'
+  puts opt_parser
+  exit
+end
+
+begin
+  opt_parser.parse(ARGV)
+rescue
+  puts opt_parser
+  exit
+end
+
+if (command == 'start') && (port.nil? || dir.nil?)
+  puts opt_parser
+  exit
+end
+
+file = factory.file
+pinto_dir = file.dirname(file.dirname(file.expand_path(__FILE__)))
+
+daemon_options = {
+  :dir_mode   => :normal,
+  :dir        => file.join(pinto_dir, 'run'),
+  :multiple   => true,
+  :log_output => false
+}
+daemons = factory.daemons
+
+case command
+when 'start'
+  number.times do |n|
+    daemons.call(daemon_options) do
+      factory.web_server(port + n, dir).run
+    end
+  end
+when 'stop'
+  daemon_options[:ARGV] = ['stop']
+  daemons.run_proc('proc', daemon_options) {}
+end

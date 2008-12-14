@@ -1,17 +1,12 @@
 module PintoBeans
   class Dispatcher
-    def initialize(application, response)
-      @application = application
+    def initialize(response)
       @response = response
     end
 
     def dispatch(request, route)
-      @response.title = @application.name
-      if @application.maintenance?
-        @response.status_code = 503
-        @response.content_language = 'en'
-        @response.add_paragraph('503 Service Unavailable')
-      elsif route.nil?
+      @response.title = 'Pinto'
+      if route.nil?
         @response.status_code = 404
         @response.content_language = 'en'
         @response.add_paragraph('404 Not Found')
