@@ -5,7 +5,7 @@ module PintoBeans
       @dispatcher = dispatcher
     end
 
-    def run(request)
+    def run(request, app_dir)
       route = @router.detect(request)
       @dispatcher.dispatch(request, route)
     end

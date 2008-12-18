@@ -1,1 +1,2 @@
-require 'pinto_beans/factory'
+module PintoBeans
+end
